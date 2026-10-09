@@ -10,7 +10,7 @@ from kzclimate.fetch import COLUMNS
 
 
 def synthetic_daily(
-    start: str = "1940-01-01",
+    start: str = "1940-01-02",
     end: str = "2025-12-31",
     *,
     trend_per_year: float = 0.03,

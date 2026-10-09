@@ -20,8 +20,10 @@ CITIES: tuple[City, ...] = (
 # Days are cut at local midnight. Both cities share this zone (UTC+5 since March 2024).
 TIMEZONE = "Asia/Almaty"
 
-# ERA5 starts here.
-FIRST_DATE = date(1940, 1, 1)
+# ERA5 starts on 1940-01-01 at 00:00 UTC, which is 05:00 or 06:00 local time, so the first
+# local day is incomplete: Open-Meteo returns a null mean and partial min/max for it.
+# The series starts with the first full local day; yearly statistics therefore start in 1941.
+FIRST_DATE = date(1940, 1, 2)
 
 
 def by_id(city_id: str) -> City:

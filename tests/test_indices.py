@@ -8,7 +8,7 @@ def one_year(year: int, **columns) -> pd.DataFrame:
     days = pd.date_range(f"{year}-01-01", f"{year}-12-31", freq="D", name="date")
     base = {"tmean": 10.0, "tmax": 20.0, "tmin": 5.0, "precip": 1.0}
     base.update(columns)
-    return pd.DataFrame({k: v if not callable(v) else v(days) for k, v in base.items()}, index=days)
+    return pd.DataFrame({k: v(days) if callable(v) else v for k, v in base.items()}, index=days)
 
 
 def test_counts_days_over_thresholds():
@@ -42,7 +42,7 @@ def test_year_with_a_missing_value_is_left_out():
 
 def test_incomplete_current_year_is_left_out(daily):
     yearly = indices.annual(daily)
-    assert yearly.index[0] == 1940
+    assert yearly.index[0] == 1941  # 1940 lacks its first local day, see cities.FIRST_DATE
     assert yearly.index[-1] == 2025
 
 

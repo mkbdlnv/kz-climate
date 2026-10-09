@@ -18,9 +18,10 @@ def city(daily):
 
 
 def test_city_covers_complete_years_only(city):
-    assert city["years"][0]["year"] == 1940
+    assert city["years"][0]["year"] == 1941
     assert city["years"][-1]["year"] == 2025
-    assert city["last_year"] == {"year": 2025, "rank": city["last_year"]["rank"], "of": 86}
+    assert city["last_year"] == {"year": 2025, "rank": city["last_year"]["rank"], "of": 85}
+    assert city["data_from"] == "1940-01-02"
     assert city["data_through"] == "2026-10-03"
 
 

@@ -41,7 +41,7 @@ def test_min_above_mean_is_reported(daily):
     assert any("tmin <= tmean <= tmax" in p for p in validate.problems(df, today=FRESH))
 
 
-def test_series_must_start_in_1940(daily):
+def test_series_must_start_with_the_first_full_day(daily):
     assert any("starts on" in p for p in validate.problems(daily.iloc[365:], today=FRESH))
 
 

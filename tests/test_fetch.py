@@ -129,9 +129,9 @@ def test_next_run_refreshes_only_the_tail(tmp_path):
 
 
 def test_nothing_new_leaves_the_file_unchanged(tmp_path):
-    fetch.update_city(ASTANA, tmp_path, today=TODAY, get=FakeArchive(until=ERA5_UNTIL), sleep=no_sleep)
-    again = fetch.update_city(ASTANA, tmp_path, today=TODAY, get=FakeArchive(until=ERA5_UNTIL), sleep=no_sleep)
-    assert again is False
+    for expected in (True, False):
+        archive = FakeArchive(until=ERA5_UNTIL)
+        assert fetch.update_city(ASTANA, tmp_path, today=TODAY, get=archive, sleep=no_sleep) is expected
 
 
 def test_revised_days_replace_stored_ones(tmp_path):

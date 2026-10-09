@@ -88,5 +88,6 @@ def recent_months(monthly: pd.Series, normals: list[float], count: int = 12) -> 
     out = []
     for month, value in monthly.tail(count).items():
         normal = normals[month.month - 1]
-        out.append({"month": str(month), "mean": float(value), "normal": normal, "anomaly": float(value) - normal})
+        value = float(value)
+        out.append({"month": str(month), "mean": value, "normal": normal, "anomaly": value - normal})
     return out

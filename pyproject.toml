@@ -44,3 +44,6 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP", "SIM", "NPY"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["kzclimate"]
