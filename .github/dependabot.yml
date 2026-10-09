@@ -1,0 +1,12 @@
+# Monthly pull requests for outdated Python packages and GitHub Actions;
+# CI runs on each, so an update that breaks the analysis is caught before it is merged.
+version: 2
+updates:
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: monthly
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly

@@ -1,0 +1,22 @@
+name: Ошибка
+description: Что-то посчитано или работает не так
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: Что случилось
+      description: Что вы ожидали увидеть и что получилось на самом деле.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Как воспроизвести
+      description: Команда, город, версия релиза (например v2026.10.08-12).
+      placeholder: python -m kzclimate --city almaty build
+  - type: textarea
+    id: log
+    attributes:
+      label: Вывод или лог
+      render: text

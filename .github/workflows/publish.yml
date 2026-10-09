@@ -1,0 +1,133 @@
+# Continuous delivery: fetch new ERA5 days, recompute, publish climate.json as a release.
+#
+#   schedule           monthly; nothing new -> nothing released
+#   push to main       the analysis code changed -> recompute from the committed data
+#   workflow_dispatch  by hand; "full" downloads the whole history again
+#
+# The dashboard (https://climate.mkab.dev) reads releases/latest/download/climate.json,
+# so a release is a deploy of new numbers. Data are committed before the release, and
+# the release is tagged at that commit: every published file can be rebuilt from git.
+name: publish
+
+on:
+  schedule:
+    # The 8th: ERA5 is ~6 days behind, so the previous month is complete by then.
+    - cron: "0 3 8 * *"
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "pyproject.toml"
+  workflow_dispatch:
+    inputs:
+      full:
+        description: "Скачать всю историю с 1940 года заново"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write # commit data, create releases
+  issues: write # report a failed scheduled run
+
+concurrency:
+  group: publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: Install
+        run: pip install -e ".[dev]"
+
+      - name: Test
+        run: pytest -q
+
+      # A code push recomputes from the committed data, unless there is none yet (first run).
+      - name: Fetch new days
+        if: github.event_name != 'push' || hashFiles('data/raw/*.csv') == ''
+        env:
+          FULL: ${{ inputs.full && '--full' || '' }}
+        run: python -m kzclimate fetch $FULL
+
+      - name: Validate
+        run: python -m kzclimate check
+
+      - name: Decide
+        id: plan
+        run: |
+          if [ -n "$(git status --porcelain -- data/raw)" ]; then changed=true; else changed=false; fi
+          echo "data_changed=$changed" >> "$GITHUB_OUTPUT"
+          if [ "$GITHUB_EVENT_NAME" = schedule ] && [ "$changed" = false ]; then
+            echo "release=false" >> "$GITHUB_OUTPUT"
+            echo "Новых данных с прошлого релиза нет, публиковать нечего." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "release=true" >> "$GITHUB_OUTPUT"
+          fi
+          echo "tag=v$(date -u +%Y.%m.%d)-$GITHUB_RUN_NUMBER" >> "$GITHUB_OUTPUT"
+          echo "through=$(tail -n 1 data/raw/almaty.csv | cut -d, -f1)" >> "$GITHUB_OUTPUT"
+
+      - name: Commit data
+        if: steps.plan.outputs.data_changed == 'true'
+        env:
+          THROUGH: ${{ steps.plan.outputs.through }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/raw
+          git commit -m "data: ERA5 through $THROUGH"
+          git pull --rebase origin main
+          git push origin HEAD:main
+
+      - name: Build climate.json
+        if: steps.plan.outputs.release == 'true'
+        env:
+          TAG: ${{ steps.plan.outputs.tag }}
+        run: |
+          python -m kzclimate build --version "$TAG" --commit "$(git rev-parse HEAD)" | tee build.log
+          {
+            echo "### $TAG"
+            echo
+            echo '```'
+            cat build.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Release
+        if: steps.plan.outputs.release == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.plan.outputs.tag }}
+          THROUGH: ${{ steps.plan.outputs.through }}
+        run: |
+          {
+            echo "Пересчёт по данным ERA5 до $THROUGH включительно (запуск: $GITHUB_EVENT_NAME)."
+            echo
+            echo '```'
+            cat build.log
+            echo '```'
+          } > notes.md
+          gh release create "$TAG" dist/climate.json \
+            --target "$(git rev-parse HEAD)" \
+            --title "Данные до $THROUGH" \
+            --notes-file notes.md \
+            --latest
+
+      - name: Report failure
+        if: failure() && github.event_name != 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          gh issue create \
+            --title "Публикация не прошла: запуск $GITHUB_RUN_NUMBER" \
+            --body "Плановое обновление упало, на сайте остались данные прошлого релиза. Лог: $RUN_URL"

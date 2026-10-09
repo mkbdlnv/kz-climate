@@ -1,0 +1,18 @@
+name: Проблема с данными
+description: Значение выглядит неправдоподобно, источник изменился или перестал обновляться
+labels: [data]
+body:
+  - type: input
+    id: where
+    attributes:
+      label: Город и даты
+      placeholder: Астана, январь 1969
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: Что не так
+      description: Какое значение в ряду и с чем вы его сравнивали (метеостанция, другой реанализ, публикация).
+    validations:
+      required: true

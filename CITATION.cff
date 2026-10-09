@@ -1,0 +1,26 @@
+cff-version: 1.2.0
+message: "Если используете код или результаты, сошлитесь на репозиторий и на источник данных ERA5."
+title: "kz-climate: климат Алматы и Астаны с 1940 года по реанализу ERA5"
+type: software
+authors:
+  - family-names: Kabdulinov
+    given-names: Medet
+repository-code: "https://github.com/mkbdlnv/kz-climate"
+url: "https://climate.mkab.dev"
+license: MIT
+keywords:
+  - climate
+  - ERA5
+  - Kazakhstan
+  - Mann-Kendall
+  - Sen's slope
+references:
+  - type: dataset
+    title: "ERA5 hourly data on single levels from 1940 to present"
+    authors:
+      - family-names: Hersbach
+        given-names: H.
+    publisher:
+      name: "Copernicus Climate Change Service (C3S) Climate Data Store"
+    doi: 10.24381/cds.adbb2d47
+    year: 2023
